@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>منظّم جدول الاختبارات</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      direction: rtl;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+
+    form {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .entry {
+      background-color: #fff;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      position: relative;
+    }
+
+    .delete-btn {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      background-color: #ff4d4d;
+      border: none;
+      color: white;
+      padding: 5px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>منظّم جدول الاختبارات</h2>
+
+  <form id="scheduleForm">
+    <label>المستوى:</label>
+    <input type="text" id="level" required>
+
+    <label>اسم المادة:</label>
+    <input type="text" id="subject" required>
+
+    <label>اليوم:</label>
+    <select id="day" required>
+      <option value="">اختر اليوم</option>
+      <option>الأحد</option>
+      <option>الاثنين</option>
+      <option>الثلاثاء</option>
+      <option>الأربعاء</option>
+      <option>الخميس</option>
+    </select>
+
+    <label>الوقت (مثال: 8:00 - 10:00):</label>
+    <input type="text" id="time" required>
+
+    <button type="submit">أضف إلى الجدول</button>
+  </form>
+
+  <div id="schedule">
+    <h3>الجدول:</h3>
+    <div id="entries"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("scheduleForm");
+    const entries = document.getElementById("entries");
+    let schedule = JSON.parse(localStorage.getItem("schedule")) || [];
+
+    function renderSchedule() {
+      entries.innerHTML = "";
+
+      schedule.forEach(({ level, subject, day, time }, index) => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.textContent = `المستوى ${level}: ${day} - ${time} | ${subject}`;
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.textContent = "حذف";
+        delBtn.onclick = function() {
+          schedule.splice(index, 1);
+          localStorage.setItem("schedule", JSON.stringify(schedule));
+          renderSchedule();
+        };
+
+        div.appendChild(delBtn);
+        entries.appendChild(div);
+      });
+    }
+
+    renderSchedule();
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const level = document.getElementById("level").value.trim();
+      const subject = document.getElementById("subject").value.trim();
+      const day = document.getElementById("day").value;
+      const time = document.getElementById("time").value.trim();
+
+      const conflict = schedule.some(entry =>
+        entry.day === day &&
+        entry.time === time &&
+        entry.subject === subject &&
+        entry.level !== level
+      );
+
+      if (conflict) {
+        alert("⚠️ تعارض: نفس المادة موجودة بمستوى آخر بنفس اليوم والوقت. جرّب تغيير الوقت أو التنسيق.");
+        return;
+      }
+
+      schedule.push({ level, subject, day, time });
+      localStorage.setItem("schedule", JSON.stringify(schedule));
+      renderSchedule();
+      form.reset();
+    });
+  </script>
+</body>
+</html>
